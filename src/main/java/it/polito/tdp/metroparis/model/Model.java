@@ -30,38 +30,42 @@ public class Model {
 			this.fermateIdMap = new HashMap<Integer, Fermata>();
 			for (Fermata f : this.fermate)
 				this.fermateIdMap.put(f.getIdFermata(), f);
-
 		}
 		return this.fermate;
 	}
 	
 	public List<Fermata> calcolaPercorso(Fermata partenza, Fermata arrivo) {
 		creaGrafo() ;
-		visitaGrafo(partenza);
-		return null ;
+		Map<Fermata,Fermata> alberoInverso=visitaGrafo(partenza);
+		
+		Fermata corrente=arrivo;
+		List<Fermata> percorso=new ArrayList<>();
+	
+		while(corrente!=null) {
+			percorso.add(0, corrente);       //aggiungo in testa e faccio traslare tutti gli altri elementi. Se avessi problemi di efficienza potrei usare un LinkedList dove aggiungere in testa ha un minore onere
+			corrente=alberoInverso.get(corrente);     //potevamo usare qua corrente= getParent(corrente) senza doverci creare l'alberoInverso	
+		}
+		
+		return percorso;
 	}
 
 	public void creaGrafo() {
 		this.grafo = new SimpleDirectedGraph<Fermata, DefaultEdge>(DefaultEdge.class);
-
+		
 //		Graphs.addAllVertices(this.grafo, this.fermate);
 		Graphs.addAllVertices(this.grafo, getFermate());
 		
 		MetroDAO dao = new MetroDAO();
-
 		List<CoppiaId> fermateDaCollegare = dao.getAllFermateConnesse();
 		for (CoppiaId coppia : fermateDaCollegare) {
 			this.grafo.addEdge(fermateIdMap.get(coppia.getIdPartenza()), fermateIdMap.get(coppia.getIdArrivo()));
 		}
-
 //		System.out.println(this.grafo);
 //		System.out.println("Vertici = " + this.grafo.vertexSet().size());
 //		System.out.println("Archi   = " + this.grafo.edgeSet().size());
 	}
 
-	
-	
-	public void visitaGrafo(Fermata partenza) {
+	public Map<Fermata, Fermata> visitaGrafo(Fermata partenza) {
 		GraphIterator<Fermata, DefaultEdge> visita = new BreadthFirstIterator<>(this.grafo, partenza);
 		
 		Map<Fermata,Fermata> alberoInverso = new HashMap<>() ;
@@ -73,13 +77,7 @@ public class Model {
 //			System.out.println(f);
 		}
 		
-		
-		// Ricostruiamo il percorso a partire dall'albero inverso (pseudo-code)
-//		List<Fermata> percorso = new ArrayList<>() ;
-//		fermata = arrivo
-//		while(fermata != null)
-//			fermata = alberoInverso.get(fermata)
-//			percorso.add(fermata)
+		return alberoInverso;
 	}
 
 }
